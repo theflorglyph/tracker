@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+from aiohttp import web
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart
@@ -13,11 +14,9 @@ from aiogram.types import (
     WebAppInfo,
 )
 
-# Токен берём из переменной окружения, чтобы не хранить его в коде.
-#   export BOT_TOKEN="123:ABC..."
-#   export WEB_APP_URL="https://<твой-логин>.github.io/brand_tier_tracker.html"
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 WEB_APP_URL = os.environ["WEB_APP_URL"]
+PORT = int(os.environ.get("PORT", 8080))
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.MARKDOWN))
@@ -26,7 +25,6 @@ dp = Dispatcher()
 BTN_TRACKER = "📱 Трекер брендов"
 BTN_KEYWORDS = "🇨🇳 Слова для поиска"
 BTN_TEMPLATES = "📦 Фразы продавцу"
-
 
 def main_keyboard() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
@@ -37,7 +35,6 @@ def main_keyboard() -> ReplyKeyboardMarkup:
         resize_keyboard=True,
     )
 
-
 @dp.message(CommandStart())
 async def cmd_start(message: Message) -> None:
     await message.answer(
@@ -46,7 +43,6 @@ async def cmd_start(message: Message) -> None:
         "запросы на китайском и заметки по ликвидности.",
         reply_markup=main_keyboard(),
     )
-
 
 @dp.message(F.text == BTN_KEYWORDS)
 async def show_keywords(message: Message) -> None:
@@ -60,7 +56,6 @@ async def show_keywords(message: Message) -> None:
         "После поиска выбери сортировку `最新发布` (сначала новые)."
     )
 
-
 @dp.message(F.text == BTN_TEMPLATES)
 async def show_templates(message: Message) -> None:
     await message.answer(
@@ -71,11 +66,24 @@ async def show_templates(message: Message) -> None:
         "`亲，请用纸箱或者气泡柱帮我包装好一点，别压坏了形状，谢谢！`"
     )
 
+# Микро-сервер для бесплатного тарифного плана Render
+async def handle(request):
+    return web.Response(text="Bot is running!")
+
+async def web_server():
+    app = web.Application()
+    app.router.add_get("/", handle)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", PORT)
+    await site.start()
 
 async def main() -> None:
-    logging.info("Бот запущен")
-    await dp.start_polling(bot)
-
+    logging.info("Бот и веб-сервер запущены")
+    await asyncio.gather(
+        dp.start_polling(bot),
+        web_server()
+    )
 
 if __name__ == "__main__":
     asyncio.run(main())
