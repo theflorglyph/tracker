@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Трекер брендов</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#101215;--card:#181b20;--line:#262a31;--tx:#eef0f2;--mu:#8b929c;--y:#ffe300;--g:#04e061;
+--S:#965eeb;--A:#04e061;--B:#ffe300;--C:#0af;--D:#ff4053}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 Manrope,system-ui,sans-serif;padding:env(safe-area-inset-top) 14px 40px}
+.w{max-width:640px;margin:0 auto}
+h1{font-size:24px;font-weight:800;margin:18px 0 2px}
+h1 i{font-style:normal;color:var(--g)}h1 b{color:var(--y)}
+.sub{color:var(--mu);font-size:13px;margin-bottom:14px}
+.row{display:flex;gap:8px;margin-bottom:10px}
+input,select{background:var(--card);border:1px solid var(--line);color:var(--tx);border-radius:12px;padding:11px 13px;font:inherit;min-width:0}
+input:focus,select:focus{outline:2px solid var(--y);border-color:transparent}
+#q{flex:1}#bd{width:104px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px;scrollbar-width:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--card);color:var(--tx);border-radius:20px;padding:7px 13px;font:600 13px Manrope,sans-serif;cursor:pointer}
+.chip.on{background:var(--y);color:#111;border-color:var(--y)}
+.chip .d{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.cnt{color:var(--mu);font-size:12px;margin:2px 2px 8px}
+.card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--c);border-radius:14px;padding:12px 13px;margin-bottom:9px}
+.top{display:flex;align-items:center;gap:8px}
+.nm{font-weight:800;font-size:16px;flex:1}
+.tg{font-size:11px;font-weight:600;color:var(--c);border:1px solid var(--c);border-radius:8px;padding:2px 7px}
+.st{background:none;border:0;font-size:20px;color:var(--mu);cursor:pointer;padding:0 2px}
+.st.on{color:var(--y)}
+.lq{margin:7px 0 9px;color:#cfd3d9;font-size:14px}
+.lq small{color:var(--mu);display:block;font-size:11px}
+.act{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.btn{background:#22262d;border:0;color:var(--tx);border-radius:10px;padding:8px 11px;font:600 13px Manrope,sans-serif;cursor:pointer}
+.btn.cp{background:var(--g);color:#06210f}
+.pr{margin-left:auto;font-weight:800;color:var(--g);font-size:13px}
+details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 13px;margin:14px 0}
+summary{font-weight:800;cursor:pointer}
+details .row{margin:10px 0 0;flex-wrap:wrap}details input,details select{flex:1 1 140px}
+.ft{color:var(--mu);font-size:11px;margin-top:18px}
+#t{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--g);color:#06210f;font-weight:800;border-radius:12px;padding:10px 16px;opacity:0;transition:.2s;pointer-events:none}
+#t.s{opacity:1}
+</style></head><body><div class="w">
+<h1><b>Goofish</b> → <i>Авито</i></h1>
+<div class="sub">Тир-лист брендов, поиск на китайском и что сейчас ликвидно</div>
+<div class="row"><input id="q" placeholder="Поиск бренда" autocomplete="off"><input id="bd" type="number" inputmode="numeric" placeholder="Бюджет ¥"></div>
+<div class="chips" id="ch"></div>
+<div class="cnt" id="cn"></div>
+<div id="ls"></div>
+<details><summary>+ Добавить свой бренд</summary>
+<div class="row"><input id="an" placeholder="Название"><select id="at"></select></div>
+<div class="row"><input id="aq" placeholder="Запрос для Goofish (необязательно)"><input id="al" placeholder="Что ликвидно (необязательно)"></div>
+<div class="row"><button class="btn cp" id="ab">Добавить</button></div></details>
+<div class="ft">Заметки о ликвидности — общая база по трендам, не живые данные. Нажми «Правка», чтобы записать, что реально продаётся на Авито. Цены ¥ — только где известен ориентир.</div>
+</div><div id="t"></div>
+<script>
+const T={S:['Покой в богатстве','var(--S)'],A:['Ликвид','var(--A)'],B:['Спорно','var(--B)'],C:['Шняга','var(--C)'],D:['Смерть в нищете','var(--D)']};
+const RAW=`S|Chrome Hearts|克罗心|кольца, кепки, худи, ремни
+S|Chanel|香奈儿|сумки, бижутерия, платки
+S|Balenciaga|巴黎世家|кроссовки Track и Triple S, кепки, худи
+S|Goyard|戈雅|кардхолдеры, сумки Saint Louis
+S|Boris Bidjan Saberi||куртки, ботинки (нишево)
+S|Hermès|爱马仕|ремни, платки, сандалии Oran
+S|Maison Margiela|马吉拉|Tabi, GAT, свитера
+S|Cartier|卡地亚|очки, браслеты Love, ремни
+S|Stefano Ricci||рубашки, ремни, галстуки (нишево)
+A|Gucci|古驰|ремни, лоферы, кошельки, кепки
+A|Adidas x Jeremy Scott|杰瑞米斯科特|кроссовки и худи коллаба (нишево)
+A|Enfants Riches Déprimés||худи, футболки, джинсы (нишево)
+A|Isaac Sellam||куртки, ботинки (нишево)
+A|Stone Island|石头岛|куртки, худи, джинсы, шапки
+A|Dolce & Gabbana|杜嘉班纳|ремни, футболки, очки
+A|Louis Vuitton|路易威登|ремни, кошельки, сумки
+A|Golden Goose|小脏鞋|кроссовки Super-Star и Ball Star
+A|Just Cavalli||футболки, джинсы, ремни
+A|GOA Clothing||худи, футболки
+A|Isabel Marant|伊莎贝尔玛兰|кроссовки Bekett, куртки
+A|Converse|匡威|Chuck 70, One Star
+A|Christian Dior|迪奥|ремни, сумки, футболки
+A|Vivienne Westwood|西太后|жемчужные колье, кольца, сумки
+A|Philipp Plein|菲利普普兰|футболки, худи, кроссовки
+A|Nike|耐克|Air Force 1, Dunk, TN, куртки
+A|H&M||только лимитки и коллабы
+A|If Six Was Nine||куртки, брюки (архив, нишево)
+A|LGB Le Grand Bleu||куртки, джинсы, ремни
+A|Julius||худи, брюки (архив)
+A|Yohji Yamamoto|山本耀司|свитера, пальто, брюки
+A|Project G/R||куртки, брюки (архив)
+A|Mihara Yasuhiro|三原康裕|кроссовки
+A|Issey Miyake|三宅一生|Pleats Please, рубашки
+A|John Galliano|约翰加利亚诺|очки, ремни, футболки
+A|Raf Simons|拉夫西蒙斯|худи, свитера, кроссовки
+A|Y-3|Y-3|кроссовки, худи, куртки
+A|Coach|蔻驰|сумки, кошельки
+A|Angel Kiss||Y2K-сумки, мини-сумки с карманами|45-85
+B|Saint Laurent|圣罗兰|ремни, очки, кошельки, футболки
+B|Prada|普拉达|нейлоновые сумки, кепки, очки, кроссовки
+B|Rick Owens|里克欧文斯|Ramones, DRKSHDW худи и футболки
+B|Miu Miu|缪缪|сумки, балетки, очки
+B|Off-White|Off-White|худи, футболки, ремни Industrial
+B|Valentino|华伦天奴|ремни, Rockstud, футболки
+B|C.P. Company|CP公司|куртки с линзой, свитшоты, очки
+B|Diesel|迪赛|ремни, кепки, лонгсливы, сумки. Не путай с 德赛|40-90
+B|No/Faith Studios||худи, футболки (нишево)
+B|Jimmy Choo|周仰杰|обувь, сумки (нишево)
+B|Haider Ackermann||пальто, пиджаки (нишево)
+B|Givenchy|纪梵希|футболки, худи, ремни
+B|Cav Empt||футболки, худи, кепки
+B|Y's|Y's 山本耀司|пальто, платья, брюки
+B|Number (N)ine|Number Nine|худи, футболки, куртки (архив)
+B|Mastermind Japan|mastermind|футболки и худи с черепом
+B|Kangol|袋鼠|кепки, панамы, бини|35-75
+B|Jaded London||джинсы, карго
+B|Гоша Рубчинский||худи, футболки, куртки
+B|Alexander McQueen|麦昆|кроссовки Oversized, ремни, шарфы
+B|Sprayground||рюкзаки
+B|Dr. Martens|马丁靴|ботинки 1460 и 1461
+B|Ferragamo|菲拉格慕|ремни, лоферы
+B|Gentle Monster|Gentle Monster|очки
+B|Oakley|欧克利|очки, кепки, бини, рюкзаки|50-110
+B|A/SH (лого распознано неточно)||обувь (нишево)
+B|Adidas|阿迪达斯|Samba, Gazelle, Spezial, костюмы
+B|Puma|彪马|Speedcat, Suede, куртки
+B|Ann Demeulemeester||ботинки, рубашки (нишево)
+B|Dries Van Noten||рубашки, пальто, шарфы
+B|MCM|MCM|рюкзаки, кошельки, ремни
+B|Juicy Couture|橘滋|велюровые костюмы, сумки
+B|Aape|Aape|худи, футболки, кепки
+B|Helmut Lang|海尔姆特朗|куртки, джинсы, футболки
+B|Alexander Wang|亚历山大王|футболки, сумки
+B|Bottega Veneta|葆蝶家|кошельки, ремни, сумки
+B|Jil Sander|吉尔桑达|футболки, свитера, сумки
+B|Balmain|巴尔曼|ремни, футболки, худи
+B|St. Michael||худи и футболки с крыльями
+B|Tornado Mart|Tornado Mart|худи, футболки, лонгсливы (архив)|50-120
+B|Timberland|添柏岚|ботинки 6-inch, куртки, кепки
+C|Vans|万斯|Old Skool, Sk8-Hi
+C|Vetements||худи, футболки
+C|Moschino|莫斯奇诺|худи, футболки, сумки
+C|Moncler|蒙克莱|пуховики, шапки, шарфы
+C|MM6 Maison Margiela||сумки, кроссовки
+C|Versace|范思哲|ремни Medusa, футболки, очки
+C|Comme des Garçons|川久保玲|футболки и кардиганы Play, Converse x CDG
+C|Acne Studios|艾克妮|шарфы, свитера, джинсы
+C|WTAPS|WTAPS|футболки, куртки, брюки
+C|Uniqlo|优衣库|только коллабы (KAWS, JW Anderson)
+C|Salomon|萨洛蒙|XT-6, ACS Pro
+C|A-Cold-Wall*||куртки, худи
+C|1017 ALYX 9SM||ремни, жилеты (нишево)
+C|Christian Louboutin|路铂廷|обувь, кардхолдеры
+C|George Gina & Lucy||сумки (нишево)
+C|New Rock|New Rock|ботинки, сапоги (нишево)
+C|Demonia|Demonia|платформы, ботинки
+C|Zara|ZARA|только ходовые модели, шанс низкий
+C|Carhartt|卡哈特|куртки Detroit и OG, худи, шапки
+C|Dickies|Dickies|брюки 874, куртки Eisenhower
+C|Alpha Industries|阿尔法|бомберы MA-1
+C|Buffalo London|Buffalo|платформы
+C|Carol Christian Poell||куртки, ботинки (архив)
+D|Bape|猿人头|худи, футболки, Bape Sta
+D|Acronym||куртки, рюкзаки (нишево)
+D|Armani|阿玛尼|джинсы, ремни, пуховики
+D|Amiri|Amiri|джинсы, футболки, худи
+D|ASICS|亚瑟士|Gel-Kayano, Gel-1130
+D|Calvin Klein|CK|белье, худи, джинсы
+D|Crocs|卡骆驰|клоги Classic, коллабы
+D|Fear of God|Fear of God|Essentials худи и футболки
+D|Furla|芙拉|сумки
+D|Guess|Guess|футболки, джинсы, сумки
+D|Hugo Boss|博斯|поло, худи, ремни
+D|Human Made||футболки, худи, кепки
+D|Kapital||куртки, рубашки (нишево)
+D|Lacoste|鳄鱼|поло, худи, кроссовки
+D|Michael Kors|迈克高仕|сумки, кошельки
+D|Loro Piana|诺悠翩雅|свитера, кепки
+D|New Era|New Era|кепки 59FIFTY
+D|New Balance|新百伦|550, 990, 2002R
+D|Napapijri||куртки Skidoo
+D|Palace|Palace|футболки, худи, коллабы
+D|Palm Angels|Palm Angels|худи, футболки, треки
+D|Polo Ralph Lauren|拉夫劳伦|свитера, поло, куртки
+D|Reebok|锐步|Classic, Club C, Pump
+D|Stüssy|斯图西|футболки, худи, кепки
+D|Supreme|Supreme|футболки, худи, кепки
+D|The North Face|北面|Nuptse, куртки, флис
+D|Tommy Hilfiger|汤米|куртки, худи
+D|Trussardi||футболки, ремни
+D|Under Armour|安德玛|спорт-футболки, костюмы`;
+const $=i=>document.getElementById(i);
+const ld=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const E=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let base=RAW.split('\n').map((l,i)=>{const [t,n,q,l2,p]=l.split('|');return{id:'b'+i,t,n,q:q||n,l:l2,p:p?p.split('-').map(Number):null}});
+let stars=ld('stars',[]),cust=ld('cust',[]),notes=ld('notes',{}),f='ALL';
+const tg=window.Telegram&&Telegram.WebApp;if(tg){tg.ready();tg.expand()}
+function toast(m){const t=$('t');t.textContent=m;t.className='s';setTimeout(()=>t.className='',1400)}
+function chips(){const c=[['ALL','Все'],['★','★ Цели ('+stars.length+')'],...Object.keys(T).map(k=>[k,T[k][0]])];
+$('ch').innerHTML=c.map(([k,n])=>'<button class="chip'+(f==k?' on':'')+'" data-f="'+k+'">'+(T[k]?'<span class="d" style="background:'+T[k][1]+'"></span>':'')+n+'</button>').join('')}
+function render(){chips();const q=$('q').value.trim().toLowerCase(),b=parseFloat($('bd').value);
+let a=[...cust.map(x=>({...x,c:1})),...base].filter(x=>(f=='ALL'||(f=='★'?stars.includes(x.id):x.t==f))&&(!q||(x.n+x.q).toLowerCase().includes(q))&&(isNaN(b)||(x.p&&x.p[0]<=b)));
+a.sort((x,y)=>stars.includes(y.id)-stars.includes(x.id));
+$('cn').textContent=a.length+' брендов'+(isNaN(b)?'':' с известным ориентиром цены до '+b+' ¥');
+$('ls').innerHTML=a.map(x=>{const n=notes[x.id],s=stars.includes(x.id);
+return'<div class="card" style="--c:'+T[x.t][1]+'"><div class="top"><div class="nm">'+E(x.n)+'</div><span class="tg">'+T[x.t][0]+'</span><button class="st'+(s?' on':'')+'" data-s="'+x.id+'">'+(s?'★':'☆')+'</button></div>'+
+'<div class="lq">'+E(n||x.l||'—')+'<small>'+(n?'твоя заметка':x.l?'общая база, не проверено':'нет данных — добавь')+'</small></div>'+
+'<div class="act"><button class="btn cp" data-c="'+E(x.q)+'">Копировать: '+E(x.q)+'</button><button class="btn" data-e="'+x.id+'">Правка</button>'+(x.c?'<button class="btn" data-d="'+x.id+'">Удалить</button>':'')+(x.p?'<span class="pr">'+x.p[0]+'–'+x.p[1]+' ¥</span>':'')+'</div></div>'}).join('')||'<div class="sub">Ничего не найдено. Измени фильтр или добавь бренд ниже.</div>'}
+$('at').innerHTML=Object.keys(T).map(k=>'<option value="'+k+'">'+T[k][0]+'</option>').join('');$('at').value='B';
+document.addEventListener('click',e=>{const d=e.target.closest('button');if(!d)return;const D=d.dataset;
+if(D.f){f=D.f}else if(D.s){stars=stars.includes(D.s)?stars.filter(i=>i!=D.s):[...stars,D.s];sv('stars',stars)}
+else if(D.c){(navigator.clipboard?navigator.clipboard.writeText(D.c):Promise.reject()).catch(()=>{const t=document.createElement('textarea');t.value=D.c;document.body.append(t);t.select();document.execCommand('copy');t.remove()});toast('Скопировано');return}
+else if(D.e){const x=[...cust,...base].find(i=>i.id==D.e),v=prompt('Что сейчас ликвидно у бренда '+x.n+'?',notes[x.id]||x.l||'');if(v===null)return;if(v.trim())notes[x.id]=v.trim();else delete notes[x.id];sv('notes',notes)}
+else if(D.d){if(!confirm('Удалить бренд?'))return;cust=cust.filter(i=>i.id!=D.d);sv('cust',cust)}
+else if(d.id=='ab'){const n=$('an').value.trim();if(!n){toast('Введи название');return}
+cust.unshift({id:'c'+Date.now(),t:$('at').value,n,q:$('aq').value.trim()||n,l:$('al').value.trim(),p:null});sv('cust',cust);['an','aq','al'].forEach(i=>$(i).value='');toast('Добавлено')}
+else return;render()});
+$('q').oninput=render;$('bd').oninput=render;render();
+</script></body></html>
